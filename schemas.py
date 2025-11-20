@@ -1,48 +1,99 @@
-"""
-Database Schemas
+from typing import Optional, List, Literal
+from datetime import datetime
+from pydantic import BaseModel, Field, HttpUrl
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
+# Collection: banner
+class LocationPoint(BaseModel):
+    lat: float
+    long: float
+    distance: Optional[float] = None
+    district: Optional[str] = None
 
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
-"""
+class Timing(BaseModel):
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    continuous: bool = False
 
-from pydantic import BaseModel, Field
-from typing import Optional
+class BannerBase(BaseModel):
+    title: str
+    category: Optional[str] = None  # e.g., festival
 
-# Example schemas (replace with your own):
+    # Type of banner content
+    variant: Literal["banner", "text"] = "banner"
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    # Common fields
+    button_name: Optional[str] = None
+    target_value: Optional[str] = None
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+    # Banner variant fields
+    banner_image_url: Optional[str] = None
 
-# Add your own schemas here:
-# --------------------------------------------------
+    # Text variant fields
+    text: Optional[str] = None
+    bg_color: Optional[str] = Field(default="#ffffff", description="Background color in hex")
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+    # Authenticity / ownership
+    vendor: bool = False
+    shinr: bool = False
+
+    vendor_id: Optional[str] = None
+    vendor_name: Optional[str] = None
+    is_premium_vendor: Optional[bool] = None
+
+    # Placement
+    show_in_home_page: bool = False
+
+    # Audience
+    whom_to_show: Literal[
+        "all",
+        "customers_set",
+        "new_joinee",
+        "location_based"
+    ] = "all"
+    customers_file_name: Optional[str] = None
+    locations: Optional[List[LocationPoint]] = None
+
+    # Timing
+    timing: Timing
+
+    # Workflow
+    status: Literal["active", "draft", "inactive"] = "draft"
+    review_status: Literal["approved", "rejected", "pending"] = "pending"
+
+class BannerCreate(BannerBase):
+    pass
+
+class BannerUpdate(BaseModel):
+    title: Optional[str] = None
+    category: Optional[str] = None
+    variant: Optional[Literal["banner", "text"]] = None
+    button_name: Optional[str] = None
+    target_value: Optional[str] = None
+    banner_image_url: Optional[str] = None
+    text: Optional[str] = None
+    bg_color: Optional[str] = None
+    vendor: Optional[bool] = None
+    shinr: Optional[bool] = None
+    vendor_id: Optional[str] = None
+    vendor_name: Optional[str] = None
+    is_premium_vendor: Optional[bool] = None
+    show_in_home_page: Optional[bool] = None
+    whom_to_show: Optional[Literal["all", "customers_set", "new_joinee", "location_based"]] = None
+    customers_file_name: Optional[str] = None
+    locations: Optional[List[LocationPoint]] = None
+    timing: Optional[Timing] = None
+    status: Optional[Literal["active", "draft", "inactive"]] = None
+    review_status: Optional[Literal["approved", "rejected", "pending"]] = None
+
+class StatusUpdate(BaseModel):
+    status: Optional[Literal["active", "draft", "inactive"]] = None
+    review_status: Optional[Literal["approved", "rejected", "pending"]] = None
+
+# Collection: vendor
+class Vendor(BaseModel):
+    name: str
+    code: Optional[str] = None
+    is_premium: bool = False
+
+class VendorCreate(Vendor):
+    pass
